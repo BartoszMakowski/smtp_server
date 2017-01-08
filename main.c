@@ -6,9 +6,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-//#include "dns_mx.h"
 #include "ses_client_init.h"
 #include "sender_rcpt.h"
+#include "dns_mx.h"
 
 #define BUF_SIZE 1024
 #define BACKLOG 10
