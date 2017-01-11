@@ -3,7 +3,7 @@
 int domainFromHelo(char *line, char **domain){
 	*domain = strtok(line, " ");
 	*domain = strtok(NULL, " ");
-	//fprintf(stdout, "domain: %s\n", *domain);
+	fprintf(stdout, "domain: %s\n", *domain);
 	return(0);	
 }
 
@@ -20,12 +20,14 @@ int clientInit(int cSocket){
 			write(cSocket, "250 inf122518_smtp_server: Hello\r\n", 34);
 			domainFromHelo(line, &domain);
 			fprintf(stdout, "domain: %s\n", domain);
+			return(0);
 		}
 		else if (strncmp (line, "HELO ", 5) == 0 || strncmp (line, "helo ", 5) == 0){
 			// TODO
 			write(cSocket, "250 inf122518_smtp_server: Hello\r\n", 34);
-			domainFromHelo(line, domain);
+			domainFromHelo(line, &domain);
 			fprintf(stdout, "domain: %s\n", domain);
+			return(0);
 		}
 		else if (strncmp (line, "quit\r\n", 6) == 0 || strncmp (line, "QUIT\r\n", 6) == 0){
 			//TODO
