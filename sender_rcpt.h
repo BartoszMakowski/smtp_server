@@ -3,6 +3,26 @@
 #include <stdlib.h>
 #include <string.h>
 
+
+/*
+ * return: 1 if true 
+ * params:
+ *   IN:
+ *     - address - address to check
+ *     - myDomains - concatenation of local domains
+ */
+int isLocalRecipient(char *address, char* myDomains);
+
+/*
+ * return: exit status
+ * params:
+ *   IN:
+ *     - address - address to get domain from
+ *   OUT:
+ *     - domain
+ */
+int domainFromAddress(char *address, char **domain);
+
 /*
  * return: exit status
  * params:
@@ -21,7 +41,7 @@ int senderFromMail(char *line, char **sender);
  *   OUT:
  *     - recipients - addresses of recipients delimited by ','
  */
-int recipientsFromRcpt(char *line, char **recipients);
+int recipientsFromRcpt(char *line, char **recipients, char *myDomains);
 
 /*
  * return: exit status
@@ -37,4 +57,4 @@ int readFrom(int cSocket);
  *   IN:
  *     - cSocket - file descriptor of socket
  */
-int readTo(int cSocket);
+int readTo(int cSocket, char* myDomains);

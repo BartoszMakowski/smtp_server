@@ -13,6 +13,25 @@
 #define BUF_SIZE 1024
 #define BACKLOG 10
 
+int quitSuccess(int cSocket){
+	char line[128];
+	int count;
+	count = 0;
+	do
+	{
+		read(cSocket, line, 128);
+		if (strncmp (line, "quit\r\n", 6) == 0 || strncmp (line, "QUIT\r\n", 6) == 0){
+			write(cSocket, "inf122518_smtp_server: Service closing transmission channel\r\n", 61);			
+			return(0);
+		}
+		else{
+			write(cSocket, "500 unrecognized command\r\n", 27);
+			count++;
+		}
+	} while ( count < 3);
+	return(-1);
+}
+
 int readDataCmd(int cSocket){
 	char line[128];
 	char *sender;
@@ -44,33 +63,29 @@ int readData(int cSocket, char** data){
 	char line[128];
 	char *sender;
 	int n;
-	int count;
 	int end;
 	end = 0;
-	count = 0;
-	*data = malloc(1);
+	*data = malloc(0);
 	do
 	{
 		n = read(cSocket, line, 1024);
 		if (strncmp (line, ".\r\n", 3) == 0){
+			write(cSocket, "250 OK\r\n", 8);
 			return(0);
-		}
-		else if (strncmp (line, "quit\r\n", 6) == 0 || strncmp (line, "QUIT\r\n", 6) == 0){
-			//TODO
-			exit(-1);
 		}
 		else{
 			fprintf(stdout, "read %d chars\n", n);
-			realloc(*data, strlen(*data) + strlen(line) + 1);
+			realloc(*data, strlen(*data) + n-2);
 			strcat(*data, line);
 			fprintf(stdout, "DATA:\n%s", *data);
 			//TODO
 			//write(cSocket, "read %i chars", n, 27);
-			count++;
 		}
-	} while ( !end && count < 10);
+	} while ( !end );
 	return(-1);
 }
+
+char myDomains[] = "foo.com:bar.com";
 
 int main(int argc, char* argv[])
 {
@@ -131,11 +146,12 @@ int main(int argc, char* argv[])
 	for(i=0; i<10; i++)
 	{
 		nClientSocket = accept(nSocket, (struct sockaddr*)&stClientAddr, &nTmp);
-		sesInit(nClientSocket);
-		clientInit(nClientSocket);
-		readFrom(nClientSocket);
-		readTo(nClientSocket);
+//		sesInit(nClientSocket);
+//		clientInit(nClientSocket);
+//		readFrom(nClientSocket);
+		readTo(nClientSocket, myDomains);
 		readDataCmd(nClientSocket);
+		quitSuccess(nClientSocket);
 		close(nClientSocket); 
 	}
 

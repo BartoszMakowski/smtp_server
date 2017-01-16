@@ -1,5 +1,24 @@
 #include "sender_rcpt.h"
 
+int isLocalRecipient(char *address, char* myDomains){
+	char *domain;
+	domainFromAddress(address, &domain);
+	fprintf(stdout, "myDomains: %s\n", myDomains);
+	if (strstr(myDomains, domain) != NULL){
+		return(1);
+	}
+	else{
+		return(0);
+	}
+}
+
+int domainFromAddress(char *address, char **domain){
+	*domain = strtok(address, "@");
+	*domain = strtok(NULL, "@");
+	fprintf(stdout, "domain: %s\n", *domain);
+	return(0);	
+}
+
 int senderFromMail(char *line, char **sender){
 	*sender = strtok(line, "<");
 	*sender = strtok(NULL, ">");
@@ -8,12 +27,17 @@ int senderFromMail(char *line, char **sender){
 	return(0);
 }
 
-int recipientsFromRcpt(char *line, char **recipients){
+int recipientsFromRcpt(char *line, char **recipients, char* myDomains){
 	*recipients = strtok(line, "<");
 	*recipients = strtok(NULL, ">");
+	if(isLocalRecipient(*recipients, myDomains)){
+		return(0);
+	}
+	else{
+		return(-1);
+	}
 //	TODO: mail syntax validation
 //	fprintf(stdout, "recipients: %s\n", *recipients);
-	return(0);
 }
 
 int readFrom(int cSocket){
@@ -48,7 +72,7 @@ int readFrom(int cSocket){
 	return(-1);
 }
 
-int readTo(int cSocket){
+int readTo(int cSocket, char* myDomains){
 	char line[128];
 	char *recipients;
 	int count;
@@ -58,7 +82,7 @@ int readTo(int cSocket){
 		read(cSocket, line, 128);
 		if (strncmp (line, "RCPT TO:", 8) == 0 || strncmp (line, "rcpt to:", 8) == 0){
 			// TODO
-			if (recipientsFromRcpt(line, &recipients) == 0){
+			if (recipientsFromRcpt(line, &recipients, myDomains) == 0){
 				fprintf(stdout, "recipients: %s\n", recipients);
 				write(cSocket, "250 OK\r\n", 8);
 				return(0);
