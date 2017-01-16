@@ -69,6 +69,7 @@ int readData(int cSocket, char** data){
 	do
 	{
 		n = read(cSocket, line, 1024);
+		line[n]='\0';
 		if (strncmp (line, ".\r\n", 3) == 0){
 			write(cSocket, "250 OK\r\n", 8);
 			return(0);
@@ -77,7 +78,8 @@ int readData(int cSocket, char** data){
 			fprintf(stdout, "read %d chars\n", n);
 			realloc(*data, strlen(*data) + n-2);
 			strcat(*data, line);
-			fprintf(stdout, "DATA:\n%s", *data);
+			fprintf(stdout, "DATA:\n%s\n#####", *data);
+			//fprintf(stdout, "LINE:\n#####\n%s\n#####", line);
 			//TODO
 			//write(cSocket, "read %i chars", n, 27);
 		}

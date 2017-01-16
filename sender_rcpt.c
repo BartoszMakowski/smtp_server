@@ -27,10 +27,10 @@ int senderFromMail(char *line, char **sender){
 	return(0);
 }
 
-int recipientsFromRcpt(char *line, char **recipients, char* myDomains){
-	*recipients = strtok(line, "<");
-	*recipients = strtok(NULL, ">");
-	if(isLocalRecipient(*recipients, myDomains)){
+int recipientFromRcpt(char *line, char **recipient, char* myDomains){
+	*recipient = strtok(line, "<");
+	*recipient = strtok(NULL, ">");
+	if(isLocalRecipient(*recipient, myDomains)){
 		return(0);
 	}
 	else{
@@ -74,7 +74,7 @@ int readFrom(int cSocket){
 
 int readTo(int cSocket, char* myDomains){
 	char line[128];
-	char *recipients;
+	char *recipient;
 	int count;
 	count = 0;
 	do
@@ -82,8 +82,8 @@ int readTo(int cSocket, char* myDomains){
 		read(cSocket, line, 128);
 		if (strncmp (line, "RCPT TO:", 8) == 0 || strncmp (line, "rcpt to:", 8) == 0){
 			// TODO
-			if (recipientsFromRcpt(line, &recipients, myDomains) == 0){
-				fprintf(stdout, "recipients: %s\n", recipients);
+			if (recipientFromRcpt(line, &recipient, myDomains) == 0){
+				fprintf(stdout, "recipient: %s\n", recipient);
 				write(cSocket, "250 OK\r\n", 8);
 				return(0);
 			}

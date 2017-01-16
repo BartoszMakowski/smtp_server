@@ -39,9 +39,9 @@ int senderFromMail(char *line, char **sender);
  *   IN:
  *     - line - line to get recipients from
  *   OUT:
- *     - recipients - addresses of recipients delimited by ','
+ *     - recipient - address of recipient
  */
-int recipientsFromRcpt(char *line, char **recipients, char *myDomains);
+int recipientFromRcpt(char *line, char **recipient, char *myDomains);
 
 /*
  * return: exit status
