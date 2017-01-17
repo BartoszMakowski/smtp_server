@@ -5,13 +5,29 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <pthread.h>
 
 //#include "dns_mx.h"
+#include "mail.h"
 #include "ses_client_init.h"
 #include "sender_rcpt.h"
 
 #define BUF_SIZE 1024
 #define BACKLOG 10
+
+void *threadBehavior(void *tData){
+	struct sCon *conInfo = (struct sCon*) tData;
+	int nClientSocket;
+	nClientSocket = (*conInfo).desc;
+	sesInit(nClientSocket);
+	clientInit(nClientSocket);
+	readFrom(nClientSocket);
+	readTo(nClientSocket, myDomains);
+	readDataCmd(nClientSocket);
+	quitSuccess(nClientSocket);
+	close(nClientSocket);
+	pthread_exit(NULL);
+}
 
 int quitSuccess(int cSocket){
 	char line[128];
@@ -87,8 +103,6 @@ int readData(int cSocket, char** data){
 	return(-1);
 }
 
-char myDomains[] = "foo.com:bar.com";
-
 int main(int argc, char* argv[])
 {
 	int nSocket;
@@ -148,13 +162,11 @@ int main(int argc, char* argv[])
 	for(i=0; i<10; i++)
 	{
 		nClientSocket = accept(nSocket, (struct sockaddr*)&stClientAddr, &nTmp);
-//		sesInit(nClientSocket);
-//		clientInit(nClientSocket);
-//		readFrom(nClientSocket);
-		readTo(nClientSocket, myDomains);
-		readDataCmd(nClientSocket);
-		quitSuccess(nClientSocket);
-		close(nClientSocket); 
+		struct sCon tData;
+		tData.desc = nClientSocket;
+		pthread_t conThread;
+		pthread_create(&conThread, NULL, threadBehavior, (void *)&tData);
+
 	}
 
 	close(nSocket); 

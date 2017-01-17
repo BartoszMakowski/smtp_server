@@ -4,7 +4,7 @@ CFLAGS=-Wall
 all: my_smtp_server.out
 
 my_smtp_server.out: ses_client_init.o sender_rcpt.o main.o
-		$(CC) $(CFLAGS) ses_client_init.o sender_rcpt.o main.o -o my_smtp_server.out -lresolv
+		$(CC) $(CFLAGS) -pthread ses_client_init.o sender_rcpt.o main.o -o my_smtp_server.out -lresolv
 main.o: main.c
 		$(CC) $(CFLAGS) -c main.c -o main.o 
 dns_mx.o: dns_mx.c
