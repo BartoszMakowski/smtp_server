@@ -40,66 +40,30 @@ int recipientFromRcpt(char *line, char **recipient, char* myDomains){
 //	fprintf(stdout, "recipients: %s\n", *recipients);
 }
 
-int readFrom(int cSocket){
-	char line[128];
+int readFrom(int cSocket, char *line, struct sMail *mail){
 	char *sender;
-	int count;
-	count = 0;
-	do
-	{
-		read(cSocket, line, 128);
-		if (strncmp (line, "MAIL FROM:", 10) == 0 || strncmp (line, "mail from:", 10) == 0){
-			// TODO
-			if (senderFromMail(line, &sender) == 0){
-				fprintf(stdout, "sender: %s\n", sender);
-				write(cSocket, "250 OK\r\n", 8);
-				return(0);
-			}
-			else{
-				return(-1);
-			}
-		}
-		else if (strncmp (line, "quit\r\n", 6) == 0 || strncmp (line, "QUIT\r\n", 6) == 0){
-			//TODO
-			exit(-1);
-		}
-		else{
-			//TODO
-			write(cSocket, "500 unrecognized command\r\n", 27);
-			count++;
-		}
-	} while ( count < 3);
-	return(-1);
+	if (senderFromMail(line, &sender) == 0){
+		fprintf(stdout, "sender: %s\n", sender);
+		write(cSocket, "250 OK\r\n", 8);
+		(*mail).sender = malloc(sizeof(char) * strlen(sender));
+		strcpy((*mail).sender, sender);
+		return(0);
+	}
+	else{
+		return(-1);
+	}
 }
 
-int readTo(int cSocket, char* myDomains){
-	char line[128];
+int readTo(int cSocket, char *line, struct sMail *mail, char* myDomains){
 	char *recipient;
-	int count;
-	count = 0;
-	do
-	{
-		read(cSocket, line, 128);
-		if (strncmp (line, "RCPT TO:", 8) == 0 || strncmp (line, "rcpt to:", 8) == 0){
-			// TODO
-			if (recipientFromRcpt(line, &recipient, myDomains) == 0){
-				fprintf(stdout, "recipient: %s\n", recipient);
-				write(cSocket, "250 OK\r\n", 8);
-				return(0);
-			}
-			else{
-				return(-1);
-			}
-		}
-		else if (strncmp (line, "quit\r\n", 6) == 0 || strncmp (line, "QUIT\r\n", 6) == 0){
-			//TODO
-			exit(-1);
-		}
-		else{
-			//TODO
-			write(cSocket, "500 unrecognized command\r\n", 27);
-			count++;
-		}
-	} while ( count < 3);
-	return(-1);
+	if (recipientFromRcpt(line, &recipient, myDomains) == 0){
+		fprintf(stdout, "recipient: %s\n", recipient);
+		write(cSocket, "250 OK\r\n", 8);
+		(*mail).recipients = malloc(sizeof(char) * strlen(recipient));
+		strcpy((*mail).recipients, recipient);
+		return(0);
+	}
+	else{
+		return(-1);
+	}
 }

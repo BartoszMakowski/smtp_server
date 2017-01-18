@@ -15,64 +15,66 @@
 #define BUF_SIZE 1024
 #define BACKLOG 10
 
+char myDomains[] = "foo.com:bar.com";
+
 void *threadBehavior(void *tData){
 	struct sCon *conInfo = (struct sCon*) tData;
+	struct sMail *mail;
+	mail = malloc(sizeof(struct sMail));
 	int nClientSocket;
 	nClientSocket = (*conInfo).desc;
+	char line[128];
+	int count;
+	count = 0;
+	
 	sesInit(nClientSocket);
-	clientInit(nClientSocket);
-	readFrom(nClientSocket);
-	readTo(nClientSocket, myDomains);
-	readDataCmd(nClientSocket);
-	quitSuccess(nClientSocket);
+	do
+	{
+		read(nClientSocket, line, 128);
+		if (strncmp (line, "EHLO ", 5) == 0 || strncmp (line, "ehlo ", 5) == 0 || strncmp (line, "HELO ", 5) == 0 || strncmp (line, "helo ", 5) == 0){
+			clientInit(nClientSocket, &line, mail);
+			fprintf(stdout, "### RCVD FROM: %s ###", (*mail).received_from);
+		}
+		else if (strncmp (line, "MAIL FROM:", 10) == 0 || strncmp (line, "mail from:", 10) == 0){
+			readFrom(nClientSocket, &line, mail);
+			fprintf(stdout, "### SENDER: %s ###", (*mail).sender);
+		}
+		else if (strncmp (line, "RCPT TO:", 8) == 0 || strncmp (line, "rcpt to:", 8) == 0){
+			readTo(nClientSocket, &line, mail, &myDomains);
+			fprintf(stdout, "### RECIPIENT: %s ###", (*mail).recipients);
+		}
+		else if (strncmp (line, "DATA\r\n:", 6) == 0 || strncmp (line, "data\r\n", 6) == 0){
+			readDataCmd(nClientSocket, &line, mail);
+			fprintf(stdout, "### DATA:\n###\n%s ###", (*mail).data);
+		}
+		else if (strncmp (line, "quit\r\n", 6) == 0 || strncmp (line, "QUIT\r\n", 6) == 0){
+			quitSuccess(nClientSocket);
+		}
+		else{
+			write(nClientSocket, "500 unrecognized command\r\n", 27);
+			count++;
+		}
+	} while ( count < 3);
 	close(nClientSocket);
 	pthread_exit(NULL);
 }
 
 int quitSuccess(int cSocket){
-	char line[128];
-	int count;
-	count = 0;
-	do
-	{
-		read(cSocket, line, 128);
-		if (strncmp (line, "quit\r\n", 6) == 0 || strncmp (line, "QUIT\r\n", 6) == 0){
-			write(cSocket, "inf122518_smtp_server: Service closing transmission channel\r\n", 61);			
-			return(0);
-		}
-		else{
-			write(cSocket, "500 unrecognized command\r\n", 27);
-			count++;
-		}
-	} while ( count < 3);
-	return(-1);
+	write(cSocket, "inf122518_smtp_server: Service closing transmission channel\r\n", 61);			
+	return(0);
 }
 
-int readDataCmd(int cSocket){
-	char line[128];
-	char *sender;
-	char **data;
-	int count;
-	count = 0;
-	do
-	{
-		read(cSocket, line, 128);
-		if (strncmp (line, "DATA\r\n:", 6) == 0 || strncmp (line, "data\r\n", 6) == 0){
-			write(cSocket, "354 Send message\r\n", 19);
-			readData(cSocket, &data);
-			return(0);			
-		}
-		else if (strncmp (line, "quit\r\n", 6) == 0 || strncmp (line, "QUIT\r\n", 6) == 0){
-			//TODO
-			exit(-1);
-		}
-		else{
-			//TODO
-			write(cSocket, "500 unrecognized command\r\n", 27);
-			count++;
-		}
-	} while ( count < 3);
-	return(-1);
+int readDataCmd(int cSocket, char *line, struct sMail *mail){
+	char *data;
+	write(cSocket, "354 Send message\r\n", 19);
+	if(readData(cSocket, &data) == 0){
+		(*mail).data = malloc(sizeof(char) * strlen(data));
+		strcpy((*mail).data, data);		
+		return(0);
+	}
+	else{
+		return(-1);
+	}
 }
 
 int readData(int cSocket, char** data){
@@ -107,12 +109,9 @@ int main(int argc, char* argv[])
 {
 	int nSocket;
 	int nClientSocket;
-	//int nConnect;
-	//int nBytes;
 	int nFoo = 1, nTmp;
 	struct sockaddr_in stServerAddr, stClientAddr;
 	struct hostent* lpstServerEnt;
-	//char cbBuf[BUF_SIZE];
 
 	if (argc != 3)
 	{
@@ -166,7 +165,6 @@ int main(int argc, char* argv[])
 		tData.desc = nClientSocket;
 		pthread_t conThread;
 		pthread_create(&conThread, NULL, threadBehavior, (void *)&tData);
-
 	}
 
 	close(nSocket); 

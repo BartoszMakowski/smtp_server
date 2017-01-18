@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "mail.h"
+
 
 /*
  * return: 1 if true 
@@ -49,7 +51,7 @@ int recipientFromRcpt(char *line, char **recipient, char *myDomains);
  *   IN:
  *     - cSocket - file descriptor of socket
  */
-int readFrom(int cSocket);
+int readFrom(int cSocket, char* line, struct sMail *mail);
 
 /*
  * return: exit status
@@ -57,4 +59,4 @@ int readFrom(int cSocket);
  *   IN:
  *     - cSocket - file descriptor of socket
  */
-int readTo(int cSocket, char* myDomains);
+int readTo(int cSocket, char *line, struct sMail *mail, char* myDomains);

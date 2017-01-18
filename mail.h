@@ -1,4 +1,5 @@
-char myDomains[] = "foo.com:bar.com";
+#ifndef MAIL_H
+#define MAIL_H
 
 struct sCon {
 	int desc;
@@ -11,4 +12,5 @@ struct sMail {
 	char* sender;
 	char* recipients;
 	char* data;
-};  
+};
+#endif

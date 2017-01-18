@@ -7,38 +7,13 @@ int domainFromHelo(char *line, char **domain){
 	return(0);	
 }
 
-int clientInit(int cSocket){
-	char line[32];
+int clientInit(int cSocket, char *line, struct sMail *mail){
 	char *domain;
-	int count;
-	count = 0;
-	do
-	{
-		read(cSocket, line, 32);
-		if (strncmp (line, "EHLO ", 5) == 0 || strncmp (line, "ehlo ", 5) == 0){
-			// TODO
-			write(cSocket, "250 inf122518_smtp_server: Hello\r\n", 34);
-			domainFromHelo(line, &domain);
-			fprintf(stdout, "domain: %s\n", domain);
-			return(0);
-		}
-		else if (strncmp (line, "HELO ", 5) == 0 || strncmp (line, "helo ", 5) == 0){
-			// TODO
-			write(cSocket, "250 inf122518_smtp_server: Hello\r\n", 34);
-			domainFromHelo(line, &domain);
-			fprintf(stdout, "domain: %s\n", domain);
-			return(0);
-		}
-		else if (strncmp (line, "quit\r\n", 6) == 0 || strncmp (line, "QUIT\r\n", 6) == 0){
-			//TODO
-			exit(-1);
-		}
-		else{
-			//TODO
-			write(cSocket, "500 unrecognized command\r\n", 27);
-			count++;
-		}
-	} while ( count < 3);
+	write(cSocket, "250 inf122518_smtp_server: Hello\r\n", 34);
+	domainFromHelo(line, &domain);
+//	TODO: domain validation
+	(*mail).received_from = malloc(sizeof(char) * strlen(domain));
+	strcpy((*mail).received_from, domain);
 	return(0);
 }
 

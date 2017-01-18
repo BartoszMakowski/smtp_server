@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "mail.h"
+
 /*
  * return: exit status
  * params:
@@ -27,4 +29,4 @@ int sesInit(int cSocket);
  *   IN:
  *     - cSocket - file descriptor of socket
  */
-int clientInit(int cSocket);
+int clientInit(int cSocket, char* line, struct sMail *mail);
