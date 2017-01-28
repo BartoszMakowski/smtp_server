@@ -11,9 +11,9 @@
 #include "mail.h"
 #include "ses_client_init.h"
 #include "sender_rcpt.h"
+#include "client.h"
 
-#define BUF_SIZE 1024
-#define BACKLOG 10
+#define BACKLOG 32
 
 char myDomains[] = "foo.com:bar.com";
 
@@ -23,38 +23,87 @@ void *threadBehavior(void *tData){
 	mail = malloc(sizeof(struct sMail));
 	int nClientSocket;
 	nClientSocket = (*conInfo).desc;
-	char line[128];
+	char line[512];
+	int status;
+	int end;
+	end = 0;
 	int count;
 	count = 0;
+	int stage;
+	stage = 0;
 	
 	sesInit(nClientSocket);
 	do
 	{
-		read(nClientSocket, line, 128);
+//		TODO: RSET, NOOP, VRFY commands
+		read(nClientSocket, line, 512);
 		if (strncmp (line, "EHLO ", 5) == 0 || strncmp (line, "ehlo ", 5) == 0 || strncmp (line, "HELO ", 5) == 0 || strncmp (line, "helo ", 5) == 0){
-			clientInit(nClientSocket, &line, mail);
-			fprintf(stdout, "### RCVD FROM: %s ###", (*mail).received_from);
+			status = clientInit(nClientSocket, &line, mail);
+			if (status == 0){
+				fprintf(stdout, "### RCVD FROM: %s ###", (*mail).received_from);
+				stage = 1;
+			}
+			else{
+				fprintf(stdout, "!!! >>helo/ehlo<< problem !!!");
+			}
 		}
 		else if (strncmp (line, "MAIL FROM:", 10) == 0 || strncmp (line, "mail from:", 10) == 0){
-			readFrom(nClientSocket, &line, mail);
-			fprintf(stdout, "### SENDER: %s ###", (*mail).sender);
+			status = readFrom(nClientSocket, &line, mail);
+			if (status == 0){
+				fprintf(stdout, "### SENDER: %s ###", (*mail).sender);
+				stage = 2;
+			}
+			else{
+				fprintf(stdout, "!!! >>mail from<< problem !!!");
+			}
 		}
 		else if (strncmp (line, "RCPT TO:", 8) == 0 || strncmp (line, "rcpt to:", 8) == 0){
-			readTo(nClientSocket, &line, mail, &myDomains);
-			fprintf(stdout, "### RECIPIENT: %s ###", (*mail).recipients);
+			if (stage == 2 || stage == 3 ){
+				status = readTo(nClientSocket, &line, mail, &myDomains);
+			}
+			else {
+				write(nClientSocket, "503 sender not yet given\r\n", 27);
+				status = -1;
+			}
+			if (status == 0){
+				fprintf(stdout, "### RECIPIENT: %s ###", (*mail).recipients);
+				stage = 4;
+			}
+			else{
+				fprintf(stdout, "!!! >>rcpt to<< problem !!!");
+			}
 		}
 		else if (strncmp (line, "DATA\r\n:", 6) == 0 || strncmp (line, "data\r\n", 6) == 0){
-			readDataCmd(nClientSocket, &line, mail);
-			fprintf(stdout, "### DATA:\n###\n%s ###", (*mail).data);
+			if (stage == 4){
+				status = readDataCmd(nClientSocket, &line, mail);
+			}
+			else {
+				write(nClientSocket, "503 valid RCPT command must precede DATA\r\n", 42);
+				status = -1;
+			}
+			if (status == 0){
+				fprintf(stdout, "### DATA:\n###\n%s ###", (*mail).data);
+			}
+			else{
+				fprintf(stdout, "!!! >>data<< problem !!!");
+			}
 		}
 		else if (strncmp (line, "quit\r\n", 6) == 0 || strncmp (line, "QUIT\r\n", 6) == 0){
-			quitSuccess(nClientSocket);
-		}
+			status = quitSuccess(nClientSocket);
+			if (status == 0){
+				end = 1;
+			}
+			else
+				fprintf(stdout, "!!! >>quit<< problem !!!");
+			}
 		else{
 			write(nClientSocket, "500 unrecognized command\r\n", 27);
 			count++;
 		}
-	} while ( count < 3);
+		if (status != 0){
+			count++;
+		}
+	} while ( count < 3 && !end);
 	close(nClientSocket);
 	pthread_exit(NULL);
 }
@@ -78,7 +127,7 @@ int readDataCmd(int cSocket, char *line, struct sMail *mail){
 }
 
 int readData(int cSocket, char** data){
-	char line[128];
+	char line[1000];
 	char *sender;
 	int n;
 	int end;
@@ -86,7 +135,7 @@ int readData(int cSocket, char** data){
 	*data = malloc(0);
 	do
 	{
-		n = read(cSocket, line, 1024);
+		n = read(cSocket, line, 1000);
 		line[n]='\0';
 		if (strncmp (line, ".\r\n", 3) == 0){
 			write(cSocket, "250 OK\r\n", 8);
@@ -112,6 +161,9 @@ int main(int argc, char* argv[])
 	int nFoo = 1, nTmp;
 	struct sockaddr_in stServerAddr, stClientAddr;
 	struct hostent* lpstServerEnt;
+	int *dsc;
+	char test[] = "172.20.10.245";
+	createCon(test, 25, dsc);
 
 	if (argc != 3)
 	{
@@ -157,8 +209,7 @@ int main(int argc, char* argv[])
 		exit(1);
 	}
 	
-	int i;
-	for(i=0; i<10; i++)
+	while(1)
 	{
 		nClientSocket = accept(nSocket, (struct sockaddr*)&stClientAddr, &nTmp);
 		struct sCon tData;
