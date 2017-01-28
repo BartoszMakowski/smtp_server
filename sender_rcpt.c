@@ -27,6 +27,7 @@ int domainFromAddress(char *address, char **domain){
 	else{
 		fprintf(stdout, "domain: %s\n", *domain);
 		status = 0;
+	}
 	return(status);	
 }
 
