@@ -2,40 +2,61 @@
 
 int isLocalRecipient(char *address, char* myDomains){
 	char *domain;
-	domainFromAddress(address, &domain);
-	fprintf(stdout, "myDomains: %s\n", myDomains);
-	if (strstr(myDomains, domain) != NULL){
-		return(1);
+	int status;
+	status = domainFromAddress(address, &domain);
+//	fprintf(stdout, "myDomains: %s\n", myDomains);
+	if (status == 0){
+		if (strstr(myDomains, domain) != NULL){
+			status = 1;
+		}
+		else{
+			status = 0;
+		}
 	}
-	else{
-		return(0);
-	}
+	return(status);
 }
 
 int domainFromAddress(char *address, char **domain){
+	int status;
 	*domain = strtok(address, "@");
 	*domain = strtok(NULL, "@");
-	fprintf(stdout, "domain: %s\n", *domain);
-	return(0);	
+	if (domain == NULL || domain[0] == '\0'){
+		fprintf(stdout, "!!! >>domain<< problem !!!\n");
+		status = -1;
+	}
+	else{
+		fprintf(stdout, "domain: %s\n", *domain);
+		status = 0;
+	return(status);	
 }
 
 int senderFromMail(char *line, char **sender){
+	int status;
+	status = 0;
 	*sender = strtok(line, "<");
 	*sender = strtok(NULL, ">");
-//	TODO: mail syntax validation
+	if (sender == NULL || sender[0] == '\0'){
+		status = -1;
+	}
+	else{
+//		TODO: mail syntax validation
+	}
 //	fprintf(stdout, "sender: %s\n", *sender);
-	return(0);
+	return(status);
 }
 
 int recipientFromRcpt(char *line, char **recipient, char* myDomains){
-	*recipient = strtok(line, "<");
+	int status;
+	status = 0;
+	*recipient = strtok(line, "<"); // get address from brackets
 	*recipient = strtok(NULL, ">");
-	if(isLocalRecipient(*recipient, myDomains)){
-		return(0);
+	if (recipient == NULL || recipient[0] == '\0'){
+		status = -1; // no brackets
 	}
-	else{
-		return(-1);
+	else if(isLocalRecipient(*recipient, myDomains) == 1){
+		status = 0;
 	}
+	return status;
 //	TODO: mail syntax validation
 //	fprintf(stdout, "recipients: %s\n", *recipients);
 }

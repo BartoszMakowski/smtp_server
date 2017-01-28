@@ -7,7 +7,7 @@
 
 
 /*
- * return: 1 if true 
+ * return: 1 if true  / 0 - false / (-1) - address error
  * params:
  *   IN:
  *     - address - address to check
@@ -16,7 +16,7 @@
 int isLocalRecipient(char *address, char* myDomains);
 
 /*
- * return: exit status
+ * return: exit status: 0 - ok / (-1) - error
  * params:
  *   IN:
  *     - address - address to get domain from
@@ -26,7 +26,7 @@ int isLocalRecipient(char *address, char* myDomains);
 int domainFromAddress(char *address, char **domain);
 
 /*
- * return: exit status
+ * return: exit status: 0 - ok / (-1) - error
  * params:
  *   IN:
  *     - line - line to get sender from
@@ -36,7 +36,7 @@ int domainFromAddress(char *address, char **domain);
 int senderFromMail(char *line, char **sender);
 
 /*
- * return: exit status
+ * return: exit status: 0 - ok / (-1) - error
  * params:
  *   IN:
  *     - line - line to get recipients from
@@ -46,7 +46,7 @@ int senderFromMail(char *line, char **sender);
 int recipientFromRcpt(char *line, char **recipient, char *myDomains);
 
 /*
- * return: exit status
+ * return: exit status: 0 - ok / (-1) - error
  * params:
  *   IN:
  *     - cSocket - file descriptor of socket
@@ -54,7 +54,7 @@ int recipientFromRcpt(char *line, char **recipient, char *myDomains);
 int readFrom(int cSocket, char* line, struct sMail *mail);
 
 /*
- * return: exit status
+ * return: exit status: 0 - ok / (-1) - error
  * params:
  *   IN:
  *     - cSocket - file descriptor of socket
