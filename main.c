@@ -25,7 +25,6 @@ void *threadBehavior(void *tData){
 	int nClientSocket;
 	nClientSocket = (*conInfo).desc;
 	char line[512];
-	char lineChar;
 	int status;
 	int end;
 	int count;
@@ -145,6 +144,7 @@ void *threadBehavior(void *tData){
 
 	freeMail(mail);
 //	fprintf(stdout, ">>>FINAL DATA:\n%s", (*mail).data);
+	free(tData);
 	pthread_exit(NULL);
 }
 
@@ -205,7 +205,6 @@ int main(int argc, char* argv[])
 	int nFoo = 1, nTmp;
 	struct sockaddr_in stServerAddr, stClientAddr;
 	struct hostent* lpstServerEnt;
-	int *dsc;
 	char test[] = "172.20.10.245";
 	createCon(test, 25);
 
@@ -252,14 +251,16 @@ int main(int argc, char* argv[])
 		fprintf(stderr, "LISTEN ERROR.\n");
 		exit(1);
 	}
-	
+	close(nClientSocket);
+
+	struct sCon *tData;
 	while(1)
 	{
 		nClientSocket = accept(nSocket, (struct sockaddr*)&stClientAddr, &nTmp);
-		struct sCon tData;
-		tData.desc = nClientSocket;
+		tData = malloc(sizeof (struct sCon));
+		(*tData).desc = nClientSocket;
 		pthread_t conThread;
-		pthread_create(&conThread, NULL, threadBehavior, (void *)&tData);
+		pthread_create(&conThread, NULL, threadBehavior, (void *)tData);
 	}
 
 	close(nSocket); 
