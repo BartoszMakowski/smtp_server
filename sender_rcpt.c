@@ -42,7 +42,7 @@ int senderFromMail(char *line, char **sender){
 	else{
 //		TODO: mail syntax validation
 	}
-//	fprintf(stdout, "sender: %s\n", *sender);
+	fprintf(stdout, "sender: %s\n", *sender);
 	return(status);
 }
 

@@ -135,9 +135,16 @@ void *threadBehavior(void *tData){
 		}
 	} while ( count < 3 && !end);
 	close(nClientSocket);
-	fprintf(stdout, ">>>FINAL DATA:\n%s", (*mail).data);
+//	fprintf(stdout, ">>>FINAL DATA:\n%s", (*mail).data);
+
+	char test[] = "172.20.10.245";
+	int tDesc;
+	tDesc = createCon(test, 25);
+//	fprintf(stdout, "UTWORZONO POLACZENIE\n");
+	sendMail(mail, tDesc);
+
 	freeMail(mail);
-	fprintf(stdout, ">>>FINAL DATA:\n%s", (*mail).data);
+//	fprintf(stdout, ">>>FINAL DATA:\n%s", (*mail).data);
 	pthread_exit(NULL);
 }
 
@@ -200,7 +207,7 @@ int main(int argc, char* argv[])
 	struct hostent* lpstServerEnt;
 	int *dsc;
 	char test[] = "172.20.10.245";
-	createCon(test, 25, dsc);
+	createCon(test, 25);
 
 	if (argc != 3)
 	{
