@@ -18,7 +18,7 @@ int clientInit(int cSocket, char *line, struct sMail *mail){
 }
 
 int sesInit(int cSocket){
-	if(1){	
+	if(1){
 		write(cSocket, "220 inf122518_smtp_server\r\n", 28);
 		return(0);
 	}

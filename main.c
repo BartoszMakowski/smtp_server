@@ -13,7 +13,8 @@
 #include "sender_rcpt.h"
 #include "client.h"
 
-#define BACKLOG 32
+#define BACKLOG 10
+#define DEBUG 0
 
 char myDomains[] = "foo.com:bar.com";
 
@@ -24,23 +25,36 @@ void *threadBehavior(void *tData){
 	int nClientSocket;
 	nClientSocket = (*conInfo).desc;
 	char line[512];
+	char lineChar;
 	int status;
 	int end;
-	end = 0;
 	int count;
 	count = 0;
 	int stage;
 	stage = 0;
-	
+	int lineLen;
+
 	sesInit(nClientSocket);
 	do
 	{
 //		TODO: RSET, NOOP, VRFY commands
-		read(nClientSocket, line, 512);
+		lineLen = 0;
+		end = 0;
+		while (lineLen <= 512 && read(nClientSocket, &line[lineLen], 1) == 1)
+		{
+			if ( lineLen > 0 && line[lineLen-1] == '\r' && line[lineLen] == '\n')
+			{
+				break;
+			}
+			lineLen++;
+		}
+
 		if (strncmp (line, "EHLO ", 5) == 0 || strncmp (line, "ehlo ", 5) == 0 || strncmp (line, "HELO ", 5) == 0 || strncmp (line, "helo ", 5) == 0){
 			status = clientInit(nClientSocket, &line, mail);
 			if (status == 0){
-				fprintf(stdout, "### RCVD FROM: %s ###", (*mail).received_from);
+				if (DEBUG){
+					fprintf(stdout, "### RCVD FROM: %s ###", (*mail).received_from);
+				}
 				stage = 1;
 			}
 			else{
@@ -50,11 +64,15 @@ void *threadBehavior(void *tData){
 		else if (strncmp (line, "MAIL FROM:", 10) == 0 || strncmp (line, "mail from:", 10) == 0){
 			status = readFrom(nClientSocket, &line, mail);
 			if (status == 0){
-				fprintf(stdout, "### SENDER: %s ###", (*mail).sender);
+				if (DEBUG){
+					fprintf(stdout, "### SENDER: %s ###", (*mail).sender);
+				}
 				stage = 2;
 			}
 			else{
-				fprintf(stdout, "!!! >>mail from<< problem !!!");
+				if (DEBUG){
+					fprintf(stdout, "!!! >>mail from<< problem !!!");
+				}
 			}
 		}
 		else if (strncmp (line, "RCPT TO:", 8) == 0 || strncmp (line, "rcpt to:", 8) == 0){
@@ -66,14 +84,19 @@ void *threadBehavior(void *tData){
 				status = -1;
 			}
 			if (status == 0){
-				fprintf(stdout, "### RECIPIENT: %s ###", (*mail).recipients);
+				if (DEBUG){
+					fprintf(stdout, "### RECIPIENT: %s ###", (*mail).recipients);
+				}
 				stage = 4;
 			}
 			else{
+				if (DEBUG){
 				fprintf(stdout, "!!! >>rcpt to<< problem !!!");
+				}
 			}
 		}
-		else if (strncmp (line, "DATA\r\n:", 6) == 0 || strncmp (line, "data\r\n", 6) == 0){
+		else if (strncmp (line, "DATA\r\n:", 6) == 0 || strncmp (line, "data\r\n", 6) == 0 || \
+		strncmp (line, "DATA:\r\n", 7) == 0 || strncmp (line, "data:\r\n", 7) == 0){
 			if (stage == 4){
 				status = readDataCmd(nClientSocket, &line, mail);
 			}
@@ -82,10 +105,14 @@ void *threadBehavior(void *tData){
 				status = -1;
 			}
 			if (status == 0){
-				fprintf(stdout, "### DATA:\n###\n%s ###", (*mail).data);
+				if (DEBUG){
+					fprintf(stdout, "### DATA:\n###\n%s ###", (*mail).data);
+				}
 			}
 			else{
-				fprintf(stdout, "!!! >>data<< problem !!!");
+				if (DEBUG){
+					fprintf(stdout, "!!! >>data<< problem !!!");
+				}
 			}
 		}
 		else if (strncmp (line, "quit\r\n", 6) == 0 || strncmp (line, "QUIT\r\n", 6) == 0){
@@ -93,9 +120,12 @@ void *threadBehavior(void *tData){
 			if (status == 0){
 				end = 1;
 			}
-			else
-				fprintf(stdout, "!!! >>quit<< problem !!!");
+			else{
+				if (DEBUG){
+					fprintf(stdout, "!!! >>quit<< problem !!!");
+				}
 			}
+		}
 		else{
 			write(nClientSocket, "500 unrecognized command\r\n", 27);
 			count++;
@@ -105,20 +135,23 @@ void *threadBehavior(void *tData){
 		}
 	} while ( count < 3 && !end);
 	close(nClientSocket);
+	fprintf(stdout, ">>>FINAL DATA:\n%s", (*mail).data);
 	pthread_exit(NULL);
 }
 
 int quitSuccess(int cSocket){
-	write(cSocket, "inf122518_smtp_server: Service closing transmission channel\r\n", 61);			
+	write(cSocket, "inf122518_smtp_server: Service closing transmission channel\r\n", 61);
 	return(0);
 }
 
 int readDataCmd(int cSocket, char *line, struct sMail *mail){
 	char *data;
 	write(cSocket, "354 Send message\r\n", 19);
+	fprintf(stdout, "354 send message\r\n");
 	if(readData(cSocket, &data) == 0){
 		(*mail).data = malloc(sizeof(char) * strlen(data));
-		strcpy((*mail).data, data);		
+		strcpy((*mail).data, data);
+//		fprintf(stdout, "zwracam zero\r\n");
 		return(0);
 	}
 	else{
@@ -131,27 +164,29 @@ int readData(int cSocket, char** data){
 	char *sender;
 	int n;
 	int end;
+	int status;
 	end = 0;
 	*data = malloc(0);
 	do
 	{
 		n = read(cSocket, line, 1000);
+//		fprintf(stdout, "READ LINE:\n%s\r\n$$$", line);
 		line[n]='\0';
-		if (strncmp (line, ".\r\n", 3) == 0){
-			write(cSocket, "250 OK\r\n", 8);
-			return(0);
-		}
-		else{
-			fprintf(stdout, "read %d chars\n", n);
-			realloc(*data, strlen(*data) + n-2);
+			if (DEBUG)
+			{
+				fprintf(stdout, "read %d chars\n", n);
+			}
+			*data = realloc(*data, strlen(*data) + n-2);
 			strcat(*data, line);
-			fprintf(stdout, "DATA:\n%s\n#####", *data);
-			//fprintf(stdout, "LINE:\n#####\n%s\n#####", line);
-			//TODO
-			//write(cSocket, "read %i chars", n, 27);
-		}
+			if (n >= 3 && line[n-3] == '.' && line[n-2] == '\r' && line[n-1] == '\n')
+			{
+				write(cSocket, "250 OK\r\n", 8);
+				status = 0;
+				end = 1;
+			}
 	} while ( !end );
-	return(-1);
+//	fprintf(stdout, "KONIEC\r\n");
+	return(status);
 }
 
 int main(int argc, char* argv[])
@@ -193,7 +228,7 @@ int main(int argc, char* argv[])
 	memcpy(&stServerAddr.sin_addr.s_addr, lpstServerEnt->h_addr, lpstServerEnt->h_length);
 	stServerAddr.sin_port = htons(atoi(argv[2]));
 
-	setsockopt(nSocket, SOL_SOCKET, SO_REUSEADDR, (char*)nFoo, sizeof(nFoo) );
+	setsockopt(nSocket, SOL_SOCKET, SO_REUSEADDR, (char*)&nFoo, sizeof(nFoo) );
 	 
 	/* bind address and port */	 
 	if(bind(nSocket, (struct sockaddr *) &stServerAddr, sizeof(struct sockaddr_in)))

@@ -1,6 +1,8 @@
 #ifndef MAIL_H
 #define MAIL_H
 
+#include <stdlib.h>
+
 struct sCon {
 	int desc;
 };  
@@ -13,4 +15,13 @@ struct sMail {
 	char* recipients;
 	char* data;
 };
+
+/*
+ * info: free sMail struct's memory
+ * return: exit status: 0 - ok
+ * params:
+ *   - *mail - pointer to sMail struct
+ */
+int freeMail(struct sMail *mail);
+
 #endif

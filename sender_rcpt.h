@@ -36,7 +36,7 @@ int domainFromAddress(char *address, char **domain);
 int senderFromMail(char *line, char **sender);
 
 /*
- * return: exit status: 0 - ok / (-1) - error
+ * return: exit status: 0 - ok / 1 - ok + local recipient / (-1) - error
  * params:
  *   IN:
  *     - line - line to get recipients from
@@ -46,7 +46,6 @@ int senderFromMail(char *line, char **sender);
 int recipientFromRcpt(char *line, char **recipient, char *myDomains);
 
 /*
- * return: exit status: 0 - ok / (-1) - error
  * params:
  *   IN:
  *     - cSocket - file descriptor of socket

@@ -21,7 +21,7 @@ int domainFromAddress(char *address, char **domain){
 	*domain = strtok(address, "@");
 	*domain = strtok(NULL, "@");
 	if (domain == NULL || domain[0] == '\0'){
-		fprintf(stdout, "!!! >>domain<< problem !!!\n");
+//		fprintf(stdout, "!!! >>domain<< problem !!!\n");
 		status = -1;
 	}
 	else{
@@ -55,6 +55,9 @@ int recipientFromRcpt(char *line, char **recipient, char* myDomains){
 		status = -1; // no brackets
 	}
 	else if(isLocalRecipient(*recipient, myDomains) == 1){
+		status = 1;
+	}
+	else{
 		status = 0;
 	}
 	return status;
@@ -65,7 +68,7 @@ int recipientFromRcpt(char *line, char **recipient, char* myDomains){
 int readFrom(int cSocket, char *line, struct sMail *mail){
 	char *sender;
 	if (senderFromMail(line, &sender) == 0){
-		fprintf(stdout, "sender: %s\n", sender);
+//		fprintf(stdout, "sender: %s\n", sender);
 		write(cSocket, "250 OK\r\n", 8);
 		(*mail).sender = malloc(sizeof(char) * strlen(sender));
 		strcpy((*mail).sender, sender);
@@ -78,8 +81,8 @@ int readFrom(int cSocket, char *line, struct sMail *mail){
 
 int readTo(int cSocket, char *line, struct sMail *mail, char* myDomains){
 	char *recipient;
-	if (recipientFromRcpt(line, &recipient, myDomains) == 0){
-		fprintf(stdout, "recipient: %s\n", recipient);
+	if (recipientFromRcpt(line, &recipient, myDomains) >= 0){
+//		fprintf(stdout, "recipient: %s\n", recipient);
 		write(cSocket, "250 OK\r\n", 8);
 		(*mail).recipients = malloc(sizeof(char) * strlen(recipient));
 		strcpy((*mail).recipients, recipient);
