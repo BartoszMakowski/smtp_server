@@ -136,6 +136,8 @@ void *threadBehavior(void *tData){
 	} while ( count < 3 && !end);
 	close(nClientSocket);
 	fprintf(stdout, ">>>FINAL DATA:\n%s", (*mail).data);
+	freeMail(mail);
+	fprintf(stdout, ">>>FINAL DATA:\n%s", (*mail).data);
 	pthread_exit(NULL);
 }
 
