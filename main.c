@@ -12,6 +12,7 @@
 #include "ses_client_init.h"
 #include "sender_rcpt.h"
 #include "client.h"
+#include "data_rset.h"
 
 #define BACKLOG 10
 #define DEBUG 0
@@ -36,7 +37,7 @@ void *threadBehavior(void *tData){
 	sesInit(nClientSocket);
 	do
 	{
-//		TODO: RSET, NOOP, VRFY commands
+//		TODO: VRFY command
 		lineLen = 0;
 		end = 0;
 		while (lineLen <= 512 && read(nClientSocket, &line[lineLen], 1) == 1)
@@ -122,6 +123,17 @@ void *threadBehavior(void *tData){
 			else{
 				if (DEBUG){
 					fprintf(stdout, "!!! >>quit<< problem !!!");
+				}
+			}
+		}
+		else if (strncmp (line, "rset\r\n", 6) == 0 || strncmp (line, "RSET\r\n", 6) == 0){
+			status = reset(nClientSocket, mail);
+			if (status == 0){
+				stage = 1;
+			}
+			else{
+				if (DEBUG){
+					fprintf(stdout, "!!! >>rset<< problem !!!");
 				}
 			}
 		}
