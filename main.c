@@ -125,6 +125,9 @@ void *threadBehavior(void *tData){
 				}
 			}
 		}
+		else if (strncmp (line, "noop\r\n", 6) == 0 || strncmp (line, "NOOP\r\n", 6) == 0){
+			write(nClientSocket, "250 OK\r\n", 8);
+		}
 		else{
 			write(nClientSocket, "500 unrecognized command\r\n", 27);
 			count++;
@@ -132,7 +135,7 @@ void *threadBehavior(void *tData){
 		if (status != 0){
 			count++;
 		}
-	} while ( count < 3 && !end);
+	} while ( count < 5 && !end);
 	close(nClientSocket);
 //	fprintf(stdout, ">>>FINAL DATA:\n%s", (*mail).data);
 
