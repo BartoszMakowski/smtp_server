@@ -50,7 +50,7 @@ void *threadBehavior(void *tData){
 		}
 
 		if (strncmp (line, "EHLO ", 5) == 0 || strncmp (line, "ehlo ", 5) == 0 || strncmp (line, "HELO ", 5) == 0 || strncmp (line, "helo ", 5) == 0){
-			status = clientInit(nClientSocket, &line, mail);
+			status = clientInit(nClientSocket, (char*)&line, mail);
 			if (status == 0){
 				if (DEBUG){
 					fprintf(stdout, "### RCVD FROM: %s ###", (*mail).received_from);
@@ -62,7 +62,7 @@ void *threadBehavior(void *tData){
 			}
 		}
 		else if (strncmp (line, "MAIL FROM:", 10) == 0 || strncmp (line, "mail from:", 10) == 0){
-			status = readFrom(nClientSocket, &line, mail);
+			status = readFrom(nClientSocket, (char*)&line, mail);
 			if (status == 0){
 				if (DEBUG){
 					fprintf(stdout, "### SENDER: %s ###", (*mail).sender);
@@ -77,7 +77,7 @@ void *threadBehavior(void *tData){
 		}
 		else if (strncmp (line, "RCPT TO:", 8) == 0 || strncmp (line, "rcpt to:", 8) == 0){
 			if (stage == 2 || stage == 3 ){
-				status = readTo(nClientSocket, &line, mail, &myDomains);
+				status = readTo(nClientSocket, (char*)&line, mail, (char*)&myDomains);
 			}
 			else {
 				write(nClientSocket, "503 sender not yet given\r\n", 27);
@@ -98,7 +98,7 @@ void *threadBehavior(void *tData){
 		else if (strncmp (line, "DATA\r\n:", 6) == 0 || strncmp (line, "data\r\n", 6) == 0 || \
 		strncmp (line, "DATA:\r\n", 7) == 0 || strncmp (line, "data:\r\n", 7) == 0){
 			if (stage == 4){
-				status = readDataCmd(nClientSocket, &line, mail);
+				status = readDataCmd(nClientSocket, (char*)&line, mail);
 			}
 			else {
 				write(nClientSocket, "503 valid RCPT command must precede DATA\r\n", 42);
@@ -171,7 +171,7 @@ int main(int argc, char* argv[])
 	struct sockaddr_in stServerAddr, stClientAddr;
 	struct hostent* lpstServerEnt;
 	char test[] = "172.20.10.245";
-	createCon(test, 25);
+//	createCon(test, 25);
 
 	if (argc != 3)
 	{
@@ -216,12 +216,13 @@ int main(int argc, char* argv[])
 		fprintf(stderr, "LISTEN ERROR.\n");
 		exit(1);
 	}
-	close(nClientSocket);
+//	close(nClientSocket);
 
 	struct sCon *tData;
 	while(1)
 	{
-		nClientSocket = accept(nSocket, (struct sockaddr*)&stClientAddr, &nTmp);
+		nTmp = sizeof(struct sockaddr);
+		nClientSocket = accept(nSocket, (struct sockaddr*)&stClientAddr, (socklen_t * __restrict__)&nTmp);
 		tData = malloc(sizeof (struct sCon));
 		(*tData).desc = nClientSocket;
 		pthread_t conThread;

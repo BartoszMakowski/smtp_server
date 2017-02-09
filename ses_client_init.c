@@ -9,7 +9,7 @@ int domainFromHelo(char *line, char **domain){
 
 int clientInit(int cSocket, char *line, struct sMail *mail){
 	char *domain;
-	write(cSocket, "250 inf122518_smtp_server: Hello\r\n", 34);
+	myWrite(cSocket, "250 inf122518_smtp_server: Hello\r\n", 34);
 	domainFromHelo(line, &domain);
 //	TODO: domain validation
 	(*mail).received_from = malloc(sizeof(char) * strlen(domain));
@@ -19,11 +19,11 @@ int clientInit(int cSocket, char *line, struct sMail *mail){
 
 int sesInit(int cSocket){
 	if(1){
-		write(cSocket, "220 inf122518_smtp_server\r\n", 28);
+		myWrite(cSocket, "220 inf122518_smtp_server\r\n", 28);
 		return(0);
 	}
 	else{
-		write(cSocket, "554 connection rejected\r\n", 28);
+		myWrite(cSocket, "554 connection rejected\r\n", 28);
 		//TODO
 		return(-1);
 	}

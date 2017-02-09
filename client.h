@@ -7,6 +7,7 @@
 #include <netdb.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 
 #include "mail.h"
 

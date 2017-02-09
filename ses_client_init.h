@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "myReadWrite.h"
 #include "mail.h"
 
 /*

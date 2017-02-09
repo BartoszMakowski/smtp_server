@@ -24,4 +24,6 @@ struct sMail {
  */
 int freeMail(struct sMail *mail);
 
+int resetMail(struct sMail *mail);
+
 #endif
